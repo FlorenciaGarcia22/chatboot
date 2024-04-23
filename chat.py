@@ -9,9 +9,9 @@ import random
 class ChatBotApp:
     def __init__(self, master):
         self.master = master
-        master.title("ChatSapsBot")
+        master.title("SapsBot")
 
-        self.chat_history = scrolledtext.ScrolledText(master, wrap=tk.WORD, width=50, height=20)
+        self.chat_history = scrolledtext.ScrolledText(master, wrap=tk.WORD, width=50, height=30)
         self.chat_history.grid(row=0, column=0, columnspan=2, padx=10, pady=10)
 
         self.label = tk.Label(master, text="Yo:", font=("Arial", 12))
@@ -23,7 +23,7 @@ class ChatBotApp:
         self.button = tk.Button(master, text="Enviar", bg="grey", fg="white", font=("Arial", 12), command=self.send_message)
         self.button.grid(row=2, columnspan=2, padx=10, pady=10)
 
-        self.bot_response("SapsBot: Hola, soy SapsBot estoy programado para brindar informacion sobre el dengue y protocolo de actuacion en caso de sospecha de portar la enfermedad.")
+        self.bot_response("SapsBot: Hola, soy SapsBot estoy programado para brindar informacion sobre el dengue y protocolo de actuacion en caso de sospecha de portar la enfermedad. ¿En que te puedo ayudar?")
 
     def send_message(self):
         user_message = self.user_input.get()
@@ -35,44 +35,58 @@ class ChatBotApp:
     def bot_response(self, message):
         self.chat_history.insert(tk.END, message + "\n")
         self.chat_history.see(tk.END)
+
+
 #Recibe la entrada del usuario user_input
 def get_response(user_input):
     #removemos del mje todos los caracteres especiales  con re.split
-    #a la entrada la convierte todo en minúscula con lower
+    #a la entrada la convierte todo en minúscula con lower, porque python es sensible a las minusculas 
     split_message = re.split(r'\s|[,:;.?!-_]\s*', user_input.lower())
     #revisamos todas las respuestas posible , recibe como entrada el mje y devuelve la respuesta
     response = check_all_messages(split_message)
     return response
 
-#Funcion que calcula la probabilidad
+#Funcion que calcula la probabilidad 
+#user message el mensaje del usuario
+#recognized_words: palabras reconocidas
+#Single_response: respuestas sencillas
+#required_words:Palabras requeridas
 def message_probability(user_message, recognized_words, single_response=False, required_word=[]):
     message_certainty = 0
     has_required_words = True
 
+#itera cada palabra del mensaje 
     for word in user_message:
-        if word in recognized_words:
-            message_certainty +=1
-
+        if word in recognized_words: #valida si esta dentro de las palabras reconocidas
+            message_certainty +=1 #si encuentra palabras va sumando 1
+#variable que almacena porcentaje de exactitud o probabilidad de que el mje que estamos dando sea el mas adecuado 
+#recibe la certeza message y la divide por la longitud de las palabras reconocidas 
+#porcentaje de palabras que contiene la oracion 
     percentage = float(message_certainty) / float (len(recognized_words))
 
+#itera por las palabras requeridas 
     for word in required_word:
+        #valida si la palabra requerida no esta en el mje
         if word not in user_message:
+            #decimos que el mje no cumple con las palabras requeridas
             has_required_words = False
             break
+    #si tiene palabras requeridas o es una respuesta simple muestra el de mayor porcentaje
     if has_required_words or single_response:
         return int(percentage * 100)
     else:
         return 0
-
+#funcion que revisa todos los mjes con todas las posibles respuestas
 def check_all_messages(message):
-        highest_prob = {}
-
+        highest_prob = {}#variable que indica la probabilidad mayor
+        #definimos la respuesta le iguala a una lista
         def response(bot_response, list_of_words, single_response = False, required_words = []):
             nonlocal highest_prob
+            #la prob mayor en la respuesta del bot va a ser igual a la funcion que me devuelve la probablilidad del mje 
             highest_prob[bot_response] = message_probability(message, list_of_words, single_response, required_words)
-
-        response('En que te puedo ayudar hoy?', ['hola','ho','ola', 'klk', 'saludos', 'buenas'], single_response = True)
-        response('El dengue es una enfermedad causada por un virus que se transmite a través de la picadura de un mosquito llamado Aedes aegypti.', ['que', 'es', 'va', 'vas', 'dengue'], required_words=['que'])
+        #Definimos respuestas
+        response('En que te puedo ayudar hoy?', ['hola','ho','ola', 'klk', 'saludos', 'buenas'], single_response = True) #definida como respuesta simple
+        response('El dengue es una enfermedad causada por un virus que se transmite a través de la picadura de un mosquito llamado Aedes aegypti.', ['que', 'es', 'va', 'vas', 'dengue'], required_words=['que'])#Palabra requerida
         response('¿El paciente es menor de edad o mayor de edad?', ['cuales','son', 'los', 'sintomas','del','dengue'], required_words=['sintomas'])
         response('los síntomas del dengue en la infancia pueden ser más variables. Algunos solo pueden manifestar un cuadro pseudogripal, mientras que otros pueden presentar sangrados u otras complicaciones.', ['menor','soy', 'el', 'paciente','es','de','edad'], required_words=['menor'])
         response('Los síntomas del dengue en mayores pueden incluir fiebre alta repentina, dolor de cabeza, músculos, articulaciones y huesos, y a veces una erupción rojiza en brazos y piernas. En casos graves, también pueden presentarse náuseas, vómitos, diarrea, dolor abdominal, dificultad para respirar, hemorragias y alteraciones en la presión.', ['mayor','soy', 'el', 'paciente','es','de','edad'], required_words=['mayor'])
@@ -85,14 +99,14 @@ def check_all_messages(message):
         response('El período de incubación del dengue es de 8 a 10 días, y la enfermedad suele durar entre 10 y 15 días.', ['dura', 'duracion', 'tiempo','cuanto','dengue', 'enfermedad'], required_words=['dura'])
         response('Si te pica un mosquito, presta atención a cualquier síntoma y consulta a un médico si es necesario.', ['picadura', 'hacer', 'de','mosquito','dengue'], required_words=['picadura'])
         response('De nada! Adios', ['gracias','muchas gracias', 'adios'], single_response=True)
-
+    #de todas una es la que mas concuerda, buscamos el max entre la probabilidad
         best_match = max(highest_prob, key=highest_prob.get)
         #print(highest_prob)
-
+        #funcion si la prob mayor es menor que 1 entonces devolvemos desconocido, en caso contrario devolvemos que la que mejor encaje
         return unknown() if highest_prob[best_match] < 1 else best_match
-
+#definimos la funcion desconocido
 def unknown():
-    response = ['intenta escribiendo de otra forma','puedes decirlo de nuevo?', 'No estoy seguro de lo que quieres'][random.randrange(3)]
+    response = ['intenta escribiendo de otra forma','puedes decirlo de nuevo?', 'No estoy seguro de lo que quieres'][random.randrange(3)] #devuelve de manera aleatoria cualquiera de esas tres respuestas
     return response
 
 root = tk.Tk()
